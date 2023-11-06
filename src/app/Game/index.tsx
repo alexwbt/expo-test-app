@@ -1,4 +1,4 @@
-import { GLView } from "expo-gl";
+import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { useRef } from "react";
 import { StyleSheet } from "react-native";
 import { Playground } from "../../game";
@@ -11,37 +11,32 @@ const styles = StyleSheet.create({
 });
 
 const Game: React.FC = () => {
-  const {
-    setScene,
-    setCamera,
-    onContextCreate,
-    setUpdateFunction,
-    renderer,
-  } = useGLView();
-
+  const glViewHook = useGLView();
   const game = useRef<Playground>();
 
   const update = () => {
     if (game.current) {
       game.current.update();
-      setScene(game.current.scene);
-      setCamera(game.current.camera);
+      glViewHook.setScene(game.current.scene);
+      glViewHook.setCamera(game.current.camera);
     }
+  };
+
+  const init = (gl: ExpoWebGLRenderingContext) => {
+    glViewHook.onContextCreate(gl);
+    glViewHook.setUpdateFunction(update);
+    if (glViewHook.renderer.current) {
+      glViewHook.renderer.current.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+      glViewHook.renderer.current.setClearColor("black");
+    }
+
+    game.current = new Playground(gl);
   };
 
   return (
     <GLView
       style={styles.glView}
-      onContextCreate={gl => {
-        game.current = new Playground(gl);
-        onContextCreate(gl);
-        setUpdateFunction(update);
-
-        if (renderer.current) {
-          renderer.current.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
-          renderer.current.setClearColor("black");
-        }
-      }}
+      onContextCreate={init}
     />
   );
 };
