@@ -4,6 +4,7 @@ import { useRef } from "react";
 
 export const useGLView = () => {
   const running = useRef(false);
+  const renderer = useRef<Renderer>();
   const scene = useRef<THREE.Scene>();
   const camera = useRef<THREE.Camera>();
   const updateFunction = useRef<() => void>();
@@ -14,25 +15,24 @@ export const useGLView = () => {
   const setUpdateFunction = (newUpdateFunction: () => void) => updateFunction.current = newUpdateFunction;
 
   const onContextCreate = (gl: ExpoWebGLRenderingContext) => {
-    const renderer = new Renderer({ gl });
-    renderer.setClearColor("black");
+    renderer.current = new Renderer({ gl });
     renderingContext.current = gl;
 
     // render loop
     const render = () => {
-      renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+      if (!running || !renderer.current)
+        return;
 
       if (updateFunction.current)
         updateFunction.current();
 
       if (scene.current && camera.current)
-        renderer.render(scene.current, camera.current);
+        renderer.current.render(scene.current, camera.current);
 
       gl.flush();
       gl.endFrameEXP();
 
-      if (running)
-        requestAnimationFrame(render);
+      requestAnimationFrame(render);
     }
 
     // start render loop
@@ -46,6 +46,7 @@ export const useGLView = () => {
     setCamera,
     setRunning,
     setUpdateFunction,
+    renderer,
     renderingContext,
   };
 };

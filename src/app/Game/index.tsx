@@ -16,13 +16,14 @@ const Game: React.FC = () => {
     setCamera,
     onContextCreate,
     setUpdateFunction,
+    renderer,
   } = useGLView();
+
   const game = useRef<Playground>();
 
   const update = () => {
     if (game.current) {
       game.current.update();
-
       setScene(game.current.scene);
       setCamera(game.current.camera);
     }
@@ -35,6 +36,11 @@ const Game: React.FC = () => {
         game.current = new Playground(gl);
         onContextCreate(gl);
         setUpdateFunction(update);
+
+        if (renderer.current) {
+          renderer.current.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+          renderer.current.setClearColor("black");
+        }
       }}
     />
   );
