@@ -13,6 +13,7 @@
     "expo-gl": "~13.0.1",
     "expo-status-bar": "~1.6.0",
     "expo-three": "^7.0.0",
+    "perlin-noise-3d": "^0.5.4",
     "react": "18.2.0",
     "react-native": "0.72.6"
   },

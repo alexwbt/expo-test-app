@@ -1,7 +1,7 @@
 import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { useRef } from "react";
 import { StyleSheet } from "react-native";
-import { Playground } from "../../game";
+import Playground from "../../game/Playground";
 import { useGLView } from "../../hooks/three";
 
 const styles = StyleSheet.create({

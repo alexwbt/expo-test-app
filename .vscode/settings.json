@@ -1,6 +1,8 @@
 {
   "json.validate.enable": false,
   "cSpell.words": [
+    "lacunarity",
+    "perlin",
     "wireframe"
   ]
 }
