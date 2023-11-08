@@ -1,5 +1,6 @@
 import { THREE } from "expo-three";
 import { PerlinNoise } from "./noise";
+import { textures } from "./asset";
 
 // every vertex includes position(3), normal(3) and uv(2)
 const CUBE_VERTICES = [
@@ -47,8 +48,18 @@ const CUBE_VERTICES = [
   -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0,  // top-left
 ];
 
+const BLOCK_FACE_TEXTURE_INDEX = [
+  [0, 0, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1, 1],
+  [3, 3, 3, 3, 1, 2],
+];
+
 const generateVertices = (data: number[][][], size: number) => {
-  const outputVertices: number[] = [];
+  const output = {
+    positions: [] as number[],
+    normals: [] as number[],
+    uv: [] as number[],
+  };
 
   for (let x = 0; x < size; x++) {
     for (let y = 0; y < size; y++) {
@@ -72,15 +83,25 @@ const generateVertices = (data: number[][][], size: number) => {
           // create face
           for (let vert = 0; vert < 6; vert++) {
             const i = face * 6 + vert; 4
-            outputVertices.push(
-              // position
+            output.positions.push(
               x + CUBE_VERTICES[i * 8],
               y + CUBE_VERTICES[i * 8 + 1],
               z + CUBE_VERTICES[i * 8 + 2],
-              // normal
-              // CUBE_VERTICES[i * 8 + 3],
-              // CUBE_VERTICES[i * 8 + 4],
-              // CUBE_VERTICES[i * 8 + 5],
+            );
+            // output.normals.push(
+            //   CUBE_VERTICES[i * 8 + 3],
+            //   CUBE_VERTICES[i * 8 + 4],
+            //   CUBE_VERTICES[i * 8 + 5],
+            // );
+
+            const textureTile = BLOCK_FACE_TEXTURE_INDEX[data[x][y][z] - 1][face];
+            const textureTileX = Math.round(textureTile % 10);
+            const textureTileY = Math.round(textureTile / 10);
+
+            output.uv.push(
+              (textureTileX + (CUBE_VERTICES[i * 8 + 6] - 0.5) * 0.96 + 0.5),
+              // flipY
+              1 - (textureTileY + (CUBE_VERTICES[i * 8 + 7] - 0.5) * 0.96 + 0.5),
             );
           }
         }
@@ -88,11 +109,11 @@ const generateVertices = (data: number[][][], size: number) => {
     }
   }
 
-  return outputVertices;
+  return output;
 };
 
-const NOISE = new PerlinNoise(3, 2, 0.5, 20);
-NOISE.seed(Date.now());
+const NOISE = new PerlinNoise(3, 2, 0.5, 30);
+// NOISE.seed(Date.now());
 
 const generateData = (
   size: number,
@@ -104,30 +125,83 @@ const generateData = (
     for (let y = 0; y < size; y++) {
       data[x][y] = [];
       for (let z = 0; z < size; z++) {
-        data[x][y][z] = NOISE.value(offset.x + x, offset.y + y, offset.z + z) > 0.5 ? 1 : 0;
+        const value = NOISE.value(offset.x + x, offset.y + y, offset.z + z);
+        if (value > y / size) {
+          if (value > (y / size) * 2)
+            data[x][y][z] = 1;
+          else
+            data[x][y][z] = 2;
+        } else
+          data[x][y][z] = 0;
+        // data[x][y][z] = (NOISE.value(offset.x + x, offset.y + y, offset.z + z) > (y / size)) ? 1 : 0;
+
+        // data[x][y][z] = 1;
+        // const o = size / 2;
+        // data[x][y][z] = (
+        //   Math.pow(x - o, 2) +
+        //   Math.pow(y - o, 2) +
+        //   Math.pow(z - o, 2) <
+        //   Math.pow(o / 2, 2)
+        // ) ? 1 : 0;
       }
     }
   }
+  for (let x = 0; x < size; x++)
+    for (let y = 0; y < size; y++)
+      for (let z = 0; z < size; z++)
+        if (data[x][y][z])
+          if (y >= size - 1 || (y < size - 1 && !data[x][y + 1][z]))
+            data[x][y][z] = 3;
+  // else if (y == size - 1)
+  //   // data[x][y][z] = (NOISE.value(offset.x + x, offset.y + y + 1, offset.z + z) > (y / size)) ? 1 : 3;
+  //   data[x][y][z] = 3;
   return data;
 };
 
 export default class Chunk {
 
-  private geometry: THREE.BufferGeometry;
+  private data: number[][][] = [];
+  private mesh: THREE.Mesh = new THREE.Mesh();
 
-  constructor() {
-    this.geometry = new THREE.BufferGeometry();
-
-    const size = 10;
-    const data = generateData(size);
-    const vertices = generateVertices(data, size);
-
-    this.geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-    this.geometry.computeVertexNormals();
+  constructor(
+    public x: number,
+    public y: number,
+    public z: number,
+    public size: number,
+  ) {
+    this.generateData();
+    this.updateMesh();
   }
 
-  getGeometry() {
-    return this.geometry;
+  generateData() {
+    this.data = generateData(this.size, {
+      x: this.x,
+      y: this.y,
+      z: this.z,
+    });
+  }
+
+  updateMesh() {
+    this.mesh.geometry = new THREE.BufferGeometry()
+    this.mesh.material = new THREE.MeshStandardMaterial({
+      side: THREE.BackSide,
+      map: textures.chunk,
+      metalness: 0,
+    });
+    this.mesh.castShadow = true;
+    this.mesh.receiveShadow = true;
+
+    this.mesh.position.set(this.x, this.y, this.z);
+
+    const { positions, uv } = generateVertices(this.data, this.size);
+
+    this.mesh.geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    this.mesh.geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    this.mesh.geometry.computeVertexNormals();
+  }
+
+  getMesh() {
+    return this.mesh;
   }
 
 }

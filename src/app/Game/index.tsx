@@ -2,6 +2,7 @@ import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { useRef } from "react";
 import { StyleSheet } from "react-native";
 import Playground from "../../game/Playground";
+import { loadAllAssets } from "../../game/asset";
 import { useGLView } from "../../hooks/three";
 
 const styles = StyleSheet.create({
@@ -22,12 +23,16 @@ const Game: React.FC = () => {
     }
   };
 
-  const init = (gl: ExpoWebGLRenderingContext) => {
+  const init = async (gl: ExpoWebGLRenderingContext) => {
+    await loadAllAssets();
+
     glViewHook.onContextCreate(gl);
     glViewHook.setUpdateFunction(update);
     if (glViewHook.renderer.current) {
       glViewHook.renderer.current.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
-      glViewHook.renderer.current.setClearColor("black");
+      glViewHook.renderer.current.setClearColor("blue");
+      glViewHook.renderer.current.shadowMap.enabled = true;
+      glViewHook.renderer.current.shadowMap.type = 2;
     }
 
     game.current = new Playground(gl);

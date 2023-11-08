@@ -23,6 +23,8 @@ export const useGLView = () => {
       if (!running || !renderer.current)
         return;
 
+      requestAnimationFrame(render);
+
       if (updateFunction.current)
         updateFunction.current();
 
@@ -31,8 +33,6 @@ export const useGLView = () => {
 
       gl.flush();
       gl.endFrameEXP();
-
-      requestAnimationFrame(render);
     }
 
     // start render loop
