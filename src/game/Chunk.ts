@@ -99,9 +99,9 @@ const generateVertices = (data: number[][][], size: number) => {
             const textureTileY = Math.round(textureTile / 10);
 
             output.uv.push(
-              (textureTileX + (CUBE_VERTICES[i * 8 + 6] - 0.5) * 0.96 + 0.5),
+              (textureTileX + (CUBE_VERTICES[i * 8 + 6] - 0.5) * 0.96 + 0.5) * 0.1,
               // flipY
-              1 - (textureTileY + (CUBE_VERTICES[i * 8 + 7] - 0.5) * 0.96 + 0.5),
+              1 - (textureTileY + (CUBE_VERTICES[i * 8 + 7] - 0.5) * 0.96 + 0.5) * 0.1,
             );
           }
         }
