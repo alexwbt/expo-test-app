@@ -112,7 +112,7 @@ const generateVertices = (data: number[][][], size: number) => {
   return output;
 };
 
-const NOISE = new PerlinNoise(3, 2, 0.5, 30);
+const NOISE = new PerlinNoise(3, 2, 0.5, 20);
 // NOISE.seed(Date.now());
 
 const generateData = (

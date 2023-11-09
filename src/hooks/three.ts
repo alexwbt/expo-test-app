@@ -1,6 +1,7 @@
 import { ExpoWebGLRenderingContext } from "expo-gl";
 import { Renderer, THREE } from "expo-three";
 import { useRef } from "react";
+import { GestureResponderEvent } from "react-native";
 
 export const useGLView = () => {
   const running = useRef(false);
@@ -51,4 +52,53 @@ export const useGLView = () => {
   };
 };
 
-export type UseGLView = ReturnType<typeof useGLView>;
+export const useDragControl = (
+  getCamera: () => THREE.Camera | undefined,
+  options?: {
+    speed: number
+  },
+) => {
+
+  const state = useRef({
+    x: 0,
+    y: 0,
+    pressed: false,
+  });
+
+  const onResponderGrant = (e: GestureResponderEvent) => {
+    state.current.x = e.nativeEvent.locationX;
+    state.current.y = e.nativeEvent.locationY;
+    state.current.pressed = true;
+  };
+
+  const onResponderRelease = () => {
+    state.current.pressed = false;
+  };
+
+  const onResponderMove = (e: GestureResponderEvent) => {
+
+    if (state.current.pressed) {
+      const camera = getCamera();
+      if (camera) {
+        const front = camera.getWorldDirection(new THREE.Vector3);
+        const dx = e.nativeEvent.locationX - state.current.x;
+        const dy = e.nativeEvent.locationY - state.current.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const radians = Math.atan2(dy, dx) - Math.atan2(front.x, front.z);
+        const x = Math.cos(radians) * (options?.speed || 1) * dist;
+        const y = Math.sin(radians) * (options?.speed || 1) * dist;
+        camera.position.add(new THREE.Vector3(x, 0, y));
+      }
+
+      state.current.x = e.nativeEvent.locationX;
+      state.current.y = e.nativeEvent.locationY;
+    }
+  };
+
+  return {
+    onResponderMove,
+    onResponderGrant,
+    onResponderRelease,
+    onStartShouldSetResponder: () => true,
+  };
+};
