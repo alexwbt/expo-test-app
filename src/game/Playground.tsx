@@ -24,7 +24,7 @@ export default class Playground {
       -cameraSize * aspectRatio,
       cameraSize * aspectRatio,
       cameraSize, -cameraSize,
-      -20, 1000
+      -500, 500
     );
 
     this.camera.position.set(20, 20, 20);

@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Game from './src/app/Game';
 
 const styles = StyleSheet.create({
@@ -9,10 +10,10 @@ const styles = StyleSheet.create({
 });
 
 const App = () => (
-  <View style={styles.container}>
+  <GestureHandlerRootView style={styles.container}>
     <StatusBar hidden />
     <Game />
-  </View>
+  </GestureHandlerRootView>
 );
 
 export default App;

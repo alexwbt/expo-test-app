@@ -1,10 +1,10 @@
 import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { useRef } from "react";
-import { Image, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Playground from "~/src/game/Playground";
 import { loadAllAssets } from "~/src/game/asset";
-import { useDragControl, useGLView } from "~/src/hooks/three";
-import { useAssets } from "expo-asset";
+import { useDragControl, useGLView, useScaleControl } from "~/src/hooks/three";
 
 const styles = StyleSheet.create({
   glView: {
@@ -54,13 +54,20 @@ const Game: React.FC = () => {
 
     game.current = new Playground(gl);
   };
+  
+  const gestures = Gesture.Race(
+    useScaleControl(() => game.current?.camera, { speed: 0.1 }),
+    useDragControl(() => game.current?.camera, { speed: 0.1 })
+  );
 
   return (
-    <GLView
-      style={styles.glView}
-      onContextCreate={init}
-      {...useDragControl(() => game.current?.camera, { speed: 0.1 })}
-    />
+    <GestureDetector gesture={gestures}>
+      <GLView
+        style={styles.glView}
+        onContextCreate={init}
+        {...useDragControl(() => game.current?.camera, { speed: 0.1 })}
+      />
+    </GestureDetector>
   );
 };
 
